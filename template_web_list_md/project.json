@@ -1,0 +1,8 @@
+{
+    "guid":"template_web_list_md",
+    "repository":{
+        "type":"git",
+        "branch":"master",
+        "url":"https://github.com/dirigiblelabs/template_web_list_md.git"
+    }
+}

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="page">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="description" content="">
+	<meta name="author" content="">
+	
+	<title>${pageTitle}</title>
+
+	<link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/angular-material/1.1.4/angular-material.min.css">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/angular-material-data-table/0.10.10/md-data-table.min.css" />
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+	<link rel="stylesheet" href="/services/web/resources/css/forms.css">
+	<script src="/services/web/resources/themes/theme.js"></script>
+</head>
+<body>
+	<div id="wrap" ng-controller="ListController">
+		<div class="row">
+			<div class="col-lg-12">
+		    	<h1 class="page-header">${pageTitle}</h1>
+			</div>
+		</div>
+		<div class="container">
+			<md-card>
+				<md-toolbar class="md-table-toolbar md-default">
+					<div class="md-toolbar-tools">
+						<span>${tableName} ({{totalItems}})</span>
+					</div>
+				</md-toolbar>
+				<md-table-container>
+					<table md-table>
+						<thead md-head>
+							<tr md-row>
+#foreach ($tableColumn in $tableColumns) 
+#if($tableColumn.visible)
+#if ($tableColumn.widgetType == "integer" || $tableColumn.widgetType == "float")
+								<th md-column md-numeric>${tableColumn.label}</th>
+#else
+								<th md-column>${tableColumn.label}</th>
+#end
+#end
+#end
+							</tr>
+						</thead>
+						<tbody md-body>
+							<tr md-row ng-repeat="entry in data | limitTo: listLimit: (listPage - 1) * listLimit">
+#foreach ($tableColumn in $tableColumns) 
+#if($tableColumn.visible)
+#if ($tableColumn.widgetType == "date")
+								<td md-cell><md-datepicker ng-model="entry.${tableColumn.name}"></md-datepicker></td>
+#else
+								<td md-cell>{{entry.${tableColumn.name}}}</td>
+#end
+#end
+#end
+							</tr>
+						</tbody>
+					</table>
+				</md-table-container>
+			</md-card>
+			<md-table-pagination md-limit="listLimit" md-limit-options="[5, 10, 15]" md-page="listPage" md-total="{{totalItems}}" md-on-paginate="pageChanged" md-page-select></md-table-pagination>
+		</div>
+	</div>
+
+	<script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.5.5/angular.min.js"></script>
+	<script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.5.5/angular-animate.min.js"></script>
+	<script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.5.5/angular-aria.min.js"></script>
+	<script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.5.5/angular-messages.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/angular-material/1.1.4/angular-material.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/angular-material-data-table/0.10.10/md-data-table.min.js"></script>
+	<script src="https://angular-ui.github.io/bootstrap/ui-bootstrap-tpls-0.14.3.js"></script>
+
+	<script type="text/javascript">
+		angular.module('page', ['ngMaterial', 'md.data.table', 'ngAnimate', 'ui.bootstrap']);
+		angular.module('page').controller('ListController', function ($scope, $http) {
+
+			$scope.listLimit = 10;
+			$scope.listPage = 1;
+			$scope.formats = ['yyyy/MM/dd', 'dd-MMMM-yyyy', 'dd.MM.yyyy', 'shortDate'];
+  			$scope.format = $scope.formats[0];
+
+			var url = '${serviceFileName}';
+
+			$http.get(getUrlWithLimit())
+			.success(function(data) {
+				$scope.data = data;
+			});
+
+			$http.get(url + '?count')
+			.success(function(count) {
+				$scope.totalItems = count;
+			});
+
+			$scope.pageChanged = function() {
+				$scope.promise = $http.get(getUrlWithLimit());
+				$scope.promise.then(function(payload) {
+					$scope.data = payload.data;
+				});
+			};
+			
+			function getUrlWithLimit() {
+				return url + '?offset=' + (($scope.listPage - 1) * $scope.listLimit + '&limit=' + $scope.listLimit);
+			}
+		});
+	</script>
+
+</body>
+</html>
