@@ -52,7 +52,7 @@
 #foreach ($tableColumn in $tableColumns) 
 #if($tableColumn.visible)
 #if ($tableColumn.widgetType == "date")
-								<td md-cell><md-datepicker ng-model="entry.${tableColumn.name}"></md-datepicker></td>
+								<td md-cell><md-datepicker ng-model="entry.${tableColumn.name}" disabled></md-datepicker></td>
 #else
 								<td md-cell>{{entry.${tableColumn.name}}}</td>
 #end
@@ -63,7 +63,7 @@
 					</table>
 				</md-table-container>
 			</md-card>
-			<md-table-pagination md-limit="listLimit" md-limit-options="[5, 10, 15]" md-page="listPage" md-total="{{totalItems}}" md-on-paginate="pageChanged" md-page-select></md-table-pagination>
+			<md-table-pagination md-limit="listLimit" md-limit-options="[5, 10, 15]" md-page="listPage" md-total="{{totalItems}}" md-page-select></md-table-pagination>
 		</div>
 	</div>
 
@@ -76,36 +76,35 @@
 	<script src="https://angular-ui.github.io/bootstrap/ui-bootstrap-tpls-0.14.3.js"></script>
 
 	<script type="text/javascript">
-		angular.module('page', ['ngMaterial', 'md.data.table', 'ngAnimate', 'ui.bootstrap']);
-		angular.module('page').controller('ListController', function ($scope, $http) {
+		var app = angular.module('page', ['ngMaterial', 'md.data.table', 'ngAnimate', 'ui.bootstrap']);
+		app.service("entityService", function($http) {
+			var url = '${serviceFileName}';
+			var urlCount = url + '?count';
+
+			return {
+				list: function() {
+					return $http.get(url);
+				},
+
+				count: function() {
+					return $http.get(urlCount);
+				}
+			};
+        });
+		app.controller('ListController', function ($scope, entityService) {
 
 			$scope.listLimit = 10;
 			$scope.listPage = 1;
 			$scope.formats = ['yyyy/MM/dd', 'dd-MMMM-yyyy', 'dd.MM.yyyy', 'shortDate'];
   			$scope.format = $scope.formats[0];
 
-			var url = '${serviceFileName}';
-
-			$http.get(getUrlWithLimit())
-			.success(function(data) {
-				$scope.data = data;
-			});
-
-			$http.get(url + '?count')
-			.success(function(count) {
+			entityService.count().success(function(count) {
 				$scope.totalItems = count;
 			});
 
-			$scope.pageChanged = function() {
-				$scope.promise = $http.get(getUrlWithLimit());
-				$scope.promise.then(function(payload) {
-					$scope.data = payload.data;
-				});
-			};
-			
-			function getUrlWithLimit() {
-				return url + '?offset=' + (($scope.listPage - 1) * $scope.listLimit + '&limit=' + $scope.listLimit);
-			}
+			entityService.list().success(function(entities) {
+				$scope.data = entities;
+			});
 		});
 	</script>
 
